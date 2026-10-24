@@ -1,5 +1,7 @@
 # Launchpad — React + Express + MySQL on EC2
 
+Repository: `devops_practice`.
+
 A complete learning project with registration, login, JWT authentication, a protected dashboard, automatic table creation, and an EC2-ready Nginx/PM2 setup.
 
 ## Project layout
