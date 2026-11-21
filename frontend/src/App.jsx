@@ -18,8 +18,8 @@ function Auth({ onAuth }) {
     e.preventDefault(); setError(''); setLoading(true);
     try {
       const response = await fetch(`${API}/auth/${mode}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || 'Server is unavailable. Please try again shortly.');
       localStorage.setItem('launchpad_token', data.token);
       onAuth(data.user);
     } catch (err) { setError(err.message || 'Could not connect to the server.'); }

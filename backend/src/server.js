@@ -74,7 +74,7 @@ async function start() {
     await initializeDatabase();
     app.listen(config.port, '0.0.0.0', () => console.log(`API running on port ${config.port}`));
   } catch (error) {
-    console.error('Database connection failed. Update backend/src/config.js.', error.message);
+    console.error('Database connection failed. Check DB_* values in backend/.env.', error.message);
     process.exit(1);
   }
 }

@@ -1,14 +1,20 @@
-// Learning setup: replace these values with your RDS/MySQL credentials.
-// For a real production app, move secrets to environment variables or AWS Secrets Manager.
+import 'dotenv/config';
+
+// All settings come from environment variables (see backend/.env.example).
+function required(name) {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing required environment variable: ${name}`);
+  return value;
+}
+
 export const config = {
-  port: 5000,
-  jwtSecret: 'replace-this-with-a-long-random-secret-before-deploying',
+  port: Number(process.env.PORT) || 5001,
+  jwtSecret: required('JWT_SECRET'),
   database: {
-    host: 'YOUR_DATABASE_HOST',
-    port: 3306,
-    user: 'YOUR_DATABASE_USER',
-    password: 'YOUR_DATABASE_PASSWORD',
-    database: 'devops_portal'
+    host: required('DB_HOST'),
+    port: Number(process.env.DB_PORT) || 3306,
+    user: required('DB_USER'),
+    password: required('DB_PASSWORD'),
+    database: process.env.DB_NAME || 'devops_portal'
   }
 };
-
