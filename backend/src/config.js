@@ -1,5 +1,5 @@
 import 'dotenv/config';
-//
+
 // All settings come from environment variables (see backend/.env.example).
 function required(name) {
   const value = process.env[name];
