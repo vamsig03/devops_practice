@@ -63,6 +63,18 @@ pipeline {
                 archiveArtifacts artifacts: 'frontend/dist/**', fingerprint: true, onlyIfSuccessful: true
             }
         }
+
+        stage('Test Application EC2 SSH') {
+            steps {
+                // Connectivity check only: no deployment commands.
+                sshagent(credentials: ['app-ec2-ssh']) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 ubuntu@172.31.44.226 \
+                            "echo SSH connection successful && hostname && whoami"
+                    '''
+                }
+            }
+        }
     }
 
     post {
