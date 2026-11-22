@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Bell, Boxes, Check, ChevronRight, Cloud, Eye, EyeOff, Gauge, GitBranch, LogOut, Rocket, Server, ShieldCheck, Sparkles, Zap } from 'lucide-react';
+import { Check, ChevronRight, Cloud, Eye, EyeOff, Gauge, GitBranch, LogOut, Rocket, Server } from 'lucide-react';
 
 const API = '/api';
 
+// The real stages of this project's Jenkins pipeline.
+const STAGES = ['Checkout', 'Verify Node & npm', 'Install dependencies', 'Build frontend', 'Run tests', 'Archive artifacts', 'Deploy to Application EC2'];
+
 function Logo() {
-  return <div className="logo"><span className="logo-mark"><Rocket size={18} /></span><span>LAUNCHPAD</span></div>;
+  return <div className="logo">
+    <svg className="logo-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 19 15H5z" /><rect x="3" y="18" width="18" height="3" rx="0.5" /></svg>
+    Launchpad
+  </div>;
 }
 
 function Auth({ onAuth }) {
@@ -13,6 +19,7 @@ function Auth({ onAuth }) {
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const isLogin = mode === 'login';
 
   async function submit(e) {
     e.preventDefault(); setError(''); setLoading(true);
@@ -26,47 +33,73 @@ function Auth({ onAuth }) {
     finally { setLoading(false); }
   }
 
-  return <main className="auth-shell">
-    <section className="brand-panel">
-      <div className="orb orb-one" /><div className="orb orb-two" />
+  return <main className="auth">
+    <section className="auth-story">
       <Logo />
-      <div className="brand-copy">
-        <div className="eyebrow"><Sparkles size={15} /> BUILT FOR MODERN TEAMS</div>
-        <h1>Ship boldly.<br /><em>Scale beautifully.</em></h1>
-        <p>Your calm, clear command center for every deployment, service, and breakthrough.</p>
-        <div className="trust-row">
-          <div className="avatars"><span>A</span><span>K</span><span>M</span><span>+</span></div>
-          <p><strong>2,400+ builders</strong><br />deploying without the drama</p>
-        </div>
+      <div className="story-copy">
+        <h1>From push to production.</h1>
+        <p>Every commit to main is built, tested and deployed to your servers, then checked until the API answers healthy.</p>
       </div>
-      <div className="deploy-card"><div className="deploy-icon"><Check size={17} /></div><div><b>Deployment successful</b><small>production · just now</small></div><span className="live-dot">LIVE</span></div>
+      <ol className="sequence" aria-label="Release pipeline stages">
+        {STAGES.map((stage, i) => {
+          const last = i === STAGES.length - 1;
+          return <li key={stage} style={{ '--i': i }} className={last ? 'is-last' : undefined}>
+            <span className="tick" aria-hidden="true"><Check /></span>
+            <span>{stage}</span>
+            <span className="stage-state">{last ? 'Live' : 'Passed'}</span>
+          </li>;
+        })}
+      </ol>
     </section>
-    <section className="form-panel">
-      <div className="mobile-logo"><Logo /></div>
-      <div className="form-wrap">
-        <div className="form-heading"><span className="mini-icon"><Zap size={19} /></span><p>WELCOME {mode === 'login' ? 'BACK' : 'ABOARD'}</p></div>
-        <h2>{mode === 'login' ? 'Good to see you.' : 'Create your account.'}</h2>
-        <p className="subtitle">{mode === 'login' ? 'Enter your details to access your workspace.' : 'Start your next great deployment today.'}</p>
+
+    <section className="auth-form">
+      <div className="form-card">
+        <h2>{isLogin ? 'Sign in' : 'Create your account'}</h2>
+        <p className="lede">{isLogin ? 'Use the email you registered with.' : 'You’ll go straight to your dashboard.'}</p>
         <form onSubmit={submit}>
-          {mode === 'register' && <label>FULL NAME<input required autoComplete="name" placeholder="Alex Morgan" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></label>}
-          <label>EMAIL ADDRESS<input required type="email" autoComplete="email" placeholder="you@company.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></label>
-          <label>PASSWORD<div className="password"><input required minLength="8" type={show ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} placeholder="Minimum 8 characters" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /><button type="button" aria-label="Toggle password visibility" onClick={() => setShow(!show)}>{show ? <EyeOff /> : <Eye />}</button></div></label>
-          {error && <div className="error">{error}</div>}
-          <button className="primary" disabled={loading}>{loading ? 'PLEASE WAIT…' : mode === 'login' ? 'ENTER WORKSPACE' : 'CREATE ACCOUNT'}<ArrowRight size={18} /></button>
+          {!isLogin && <div className="field">
+            <label htmlFor="name">Full name</label>
+            <input id="name" required autoComplete="name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+          </div>}
+          <div className="field">
+            <label htmlFor="email">Email</label>
+            <input id="email" required type="email" autoComplete="email" placeholder="you@company.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+          </div>
+          <div className="field">
+            <label htmlFor="password">Password</label>
+            <div className="password">
+              <input id="password" required minLength="8" type={show ? 'text' : 'password'} autoComplete={isLogin ? 'current-password' : 'new-password'} aria-describedby={isLogin ? undefined : 'password-hint'} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
+              <button type="button" aria-label={show ? 'Hide password' : 'Show password'} onClick={() => setShow(!show)}>{show ? <EyeOff /> : <Eye />}</button>
+            </div>
+            {!isLogin && <p className="hint" id="password-hint">At least 8 characters.</p>}
+          </div>
+          {error && <p className="error" role="alert">{error}</p>}
+          <button className="btn-primary btn-block" disabled={loading}>
+            {loading ? (isLogin ? 'Signing in…' : 'Creating account…') : (isLogin ? 'Sign in' : 'Create account')}
+          </button>
         </form>
-        <p className="switch">{mode === 'login' ? 'New to Launchpad?' : 'Already have an account?'} <button onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}>{mode === 'login' ? 'Create an account' : 'Sign in'}</button></p>
-        <div className="secure"><ShieldCheck size={15} /> Enterprise-grade security. Always encrypted.</div>
+        <p className="switch">
+          {isLogin ? 'No account yet?' : 'Already registered?'}{' '}
+          <button type="button" onClick={() => { setMode(isLogin ? 'register' : 'login'); setError(''); }}>{isLogin ? 'Create one' : 'Sign in'}</button>
+        </p>
       </div>
     </section>
   </main>;
 }
 
-const cards = [
-  { label: 'DEPLOYMENTS', value: '12', note: '+3 this week', icon: Rocket, tone: 'lime' },
-  { label: 'UPTIME', value: '99.98%', note: 'All systems healthy', icon: Gauge, tone: 'violet' },
-  { label: 'SERVICES', value: '4', note: 'Across 2 regions', icon: Boxes, tone: 'blue' },
-  { label: 'ACTIVE ALERTS', value: '0', note: 'Looking good', icon: Bell, tone: 'orange' }
+const NAV = [['Overview', Gauge], ['Deployments', Rocket], ['Services', Server], ['Pipelines', GitBranch], ['Infrastructure', Cloud]];
+
+const FIGURES = [
+  { key: 'deployments', label: 'Deployments', note: '+3 this week' },
+  { key: 'uptime', label: 'Uptime', note: 'All services healthy' },
+  { key: 'services', label: 'Services', note: 'Across 2 regions' },
+  { key: 'alerts', label: 'Open alerts', note: 'Nothing needs attention' }
 ];
+
+function greeting() {
+  const hour = new Date().getHours();
+  return hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+}
 
 function Dashboard({ onLogout }) {
   const [data, setData] = useState(null);
@@ -74,16 +107,76 @@ function Dashboard({ onLogout }) {
     fetch(`${API}/dashboard`, { headers: { Authorization: `Bearer ${localStorage.getItem('launchpad_token')}` } })
       .then(async r => { if (!r.ok) throw new Error(); return r.json(); }).then(setData).catch(onLogout);
   }, [onLogout]);
-  if (!data) return <div className="loader"><span /><p>Preparing your workspace</p></div>;
+
+  if (!data) return <div className="loader" role="status"><span aria-hidden="true" /><p>Loading your dashboard…</p></div>;
+
   const firstName = data.user.name.split(' ')[0];
-  return <div className="dashboard">
-    <aside><Logo /><nav><a className="active"><Gauge /> Overview</a><a><Rocket /> Deployments</a><a><Server /> Services</a><a><GitBranch /> Pipelines</a><a><Cloud /> Infrastructure</a></nav><div className="aside-bottom"><div className="help"><Sparkles /><b>Need a hand?</b><small>Read the deployment guide</small></div><button onClick={onLogout}><LogOut /> Sign out</button></div></aside>
-    <div className="dash-main">
-      <header><div><span className="mobile-brand"><Logo /></span><p>WORKSPACE / PRODUCTION</p><h1>Good evening, {firstName}.</h1></div><div className="profile"><button aria-label="Notifications"><Bell /></button><span>{firstName[0]}</span><div><b>{data.user.name}</b><small>{data.user.email}</small></div></div></header>
-      <section className="hero"><div><span className="status"><i /> ALL SYSTEMS OPERATIONAL</span><h2>Everything is running<br />smoothly.</h2><p>Your infrastructure is healthy and your latest release is live.</p></div><button>NEW DEPLOYMENT <Rocket size={18} /></button><div className="hero-grid" /></section>
-      <section className="stats">{cards.map(({ label, value, note, icon: Icon, tone }) => <article key={label}><div className={`card-icon ${tone}`}><Icon /></div><span>{label}</span><strong>{data.stats[label.toLowerCase().replace('active ', '')] ?? value}</strong><small><Check size={13} /> {note}</small></article>)}</section>
-      <section className="lower-grid"><div className="activity panel"><div className="panel-title"><div><p>RECENT ACTIVITY</p><h3>What’s happening</h3></div><button>View all <ChevronRight /></button></div>{data.activity.map((item, i) => <div className="event" key={item.title}><span className={`event-icon e${i}`}><Check /></span><div><b>{item.title}</b><small>{item.detail}</small></div><time>{item.time}</time></div>)}</div><div className="quick panel"><div className="panel-title"><div><p>QUICK START</p><h3>Keep shipping</h3></div></div><button><span><GitBranch />Connect repository</span><ChevronRight /></button><button><span><Server />Add a service</span><ChevronRight /></button><button><span><Cloud />View infrastructure</span><ChevronRight /></button></div></section>
-    </div>
+  const latest = data.activity[0];
+
+  return <div className="dash">
+    <header className="topbar">
+      <Logo />
+      <nav className="topnav" aria-label="Main">
+        {NAV.map(([label, Icon], i) => <button type="button" key={label} aria-current={i === 0 ? 'page' : undefined}><Icon aria-hidden="true" />{label}</button>)}
+      </nav>
+      <div className="account">
+        <span className="avatar" aria-hidden="true">{firstName[0]}</span>
+        <div className="account-text"><b>{data.user.name}</b><small>{data.user.email}</small></div>
+        <button type="button" className="btn-quiet" onClick={onLogout}><LogOut aria-hidden="true" />Sign out</button>
+      </div>
+    </header>
+
+    <main className="dash-body">
+      <div className="dash-head">
+        <div>
+          <h1>{greeting()}, {firstName}.</h1>
+          <p className="health"><span className="health-dot" aria-hidden="true" />Production is healthy and the latest release is live.</p>
+        </div>
+        <button type="button" className="btn-primary"><Rocket aria-hidden="true" />New deployment</button>
+      </div>
+
+      {latest && <section className="release" aria-labelledby="release-title">
+        <div className="release-head">
+          <h2 id="release-title">Latest release</h2>
+          <p>{latest.detail}<span className="sep" aria-hidden="true" />{latest.time}</p>
+        </div>
+        <ol className="pipeline">
+          {STAGES.map((stage, i) => <li key={stage} className={i === STAGES.length - 1 ? 'is-live' : undefined}>
+            <span className="node" aria-hidden="true"><Check /></span>
+            <span className="pipeline-name">{stage}</span>
+          </li>)}
+        </ol>
+      </section>}
+
+      <dl className="figures">
+        {FIGURES.map(({ key, label, note }) => <div className={`figure${key === 'alerts' && Number(data.stats[key]) > 0 ? ' is-alert' : ''}`} key={key}>
+          <dt>{label}</dt>
+          <dd className="figure-value">{data.stats[key]}</dd>
+          <dd className="figure-note">{note}</dd>
+        </div>)}
+      </dl>
+
+      <div className="lower">
+        <section aria-labelledby="activity-title">
+          <h2 id="activity-title">Recent activity</h2>
+          <ol className="timeline">
+            {data.activity.map(item => <li key={item.title} className={`is-${item.status}`}>
+              <span className="tl-dot" aria-hidden="true" />
+              <div><b>{item.title}</b><span>{item.detail}</span></div>
+              <time>{item.time}</time>
+            </li>)}
+          </ol>
+        </section>
+        <section aria-labelledby="next-title">
+          <h2 id="next-title">Next steps</h2>
+          <div className="next">
+            <button type="button"><GitBranch aria-hidden="true" /><span>Connect a repository</span><ChevronRight aria-hidden="true" /></button>
+            <button type="button"><Server aria-hidden="true" /><span>Add a service</span><ChevronRight aria-hidden="true" /></button>
+            <button type="button"><Cloud aria-hidden="true" /><span>View infrastructure</span><ChevronRight aria-hidden="true" /></button>
+          </div>
+        </section>
+      </div>
+    </main>
   </div>;
 }
 
@@ -92,4 +185,3 @@ export default function App() {
   const logout = () => { localStorage.removeItem('launchpad_token'); setUser(null); };
   return user ? <Dashboard onLogout={logout} /> : <Auth onAuth={setUser} />;
 }
-
